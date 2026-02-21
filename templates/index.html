@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CrashRisk — Predictive Aviation Safety Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060a12; --bg2: #0b1221; --bg3: #111827;
+  --panel: #0f1929; --border: #1e2d45; --border2: #243552;
+  --amber: #f59e0b; --amber2: #fcd34d;
+  --blue: #3b82f6; --blue2: #60a5fa;
+  --green: #22c55e; --red: #ef4444; --orange: #f97316;
+  --text: #e2e8f0; --text2: #94a3b8; --text3: #64748b;
+  --mono: 'Space Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+  background-size: 60px 60px; pointer-events: none; z-index: 0;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 60px;
+  background: rgba(6,10,18,0.9); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand { display: flex; align-items: center; gap: 0.75rem; font-family: var(--display); font-size: 1.2rem; font-weight: 800; }
+.nav-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px var(--amber); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+.nav-links { display: flex; gap: 2rem; }
+.nav-links a { font-family: var(--mono); font-size: 0.68rem; color: var(--text2); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; }
+.nav-links a:hover { color: var(--amber); }
+.nav-badge { font-family: var(--mono); font-size: 0.65rem; color: var(--green); border: 1px solid var(--green); padding: 2px 8px; border-radius: 2px; letter-spacing: 0.08em; }
+
+/* TICKER */
+.ticker { background: var(--bg3); border-bottom: 1px solid var(--border); padding: 0.5rem 0; overflow: hidden; position: relative; z-index: 1; margin-top: 60px; }
+.ticker-track { display: flex; gap: 4rem; animation: tickerMove 35s linear infinite; white-space: nowrap; }
+.ticker-item { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0; }
+.ticker-item .tv { color: var(--amber); margin-left: 0.4rem; }
+.ticker-item .tg { color: var(--green); margin-left: 0.4rem; }
+@keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+
+/* HERO */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 2rem 4rem; text-align: center; overflow: hidden;
+}
+.hero-glow { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); width: 700px; height: 500px; background: radial-gradient(ellipse, rgba(59,130,246,0.1) 0%, transparent 70%); pointer-events: none; }
+.hero-eyebrow { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.2em; color: var(--amber); text-transform: uppercase; margin-bottom: 1.5rem; animation: fadeUp 0.7s ease both; }
+h1 { font-family: var(--display); font-size: clamp(3.5rem, 9vw, 7.5rem); font-weight: 800; line-height: 0.92; letter-spacing: -0.02em; animation: fadeUp 0.7s 0.1s ease both; }
+h1 span { color: var(--amber); }
+.hero-sub { font-size: 1.05rem; color: var(--text2); max-width: 580px; margin: 1.5rem auto 0; line-height: 1.75; animation: fadeUp 0.7s 0.2s ease both; }
+.hero-stats { display: flex; gap: 3rem; margin-top: 2.5rem; justify-content: center; animation: fadeUp 0.7s 0.3s ease both; }
+.hstat .val { font-family: var(--display); font-size: 2.2rem; font-weight: 800; color: var(--amber); }
+.hstat .lbl { font-family: var(--mono); font-size: 0.6rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.2rem; }
+.hero-btns { display: flex; gap: 1rem; margin-top: 2.5rem; justify-content: center; animation: fadeUp 0.7s 0.4s ease both; }
+.btn-a { background: var(--amber); color: #000; font-family: var(--mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.8rem 2rem; border: none; cursor: pointer; transition: all 0.2s; clip-path: polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
+.btn-a:hover { background: var(--amber2); transform: translateY(-2px); }
+.btn-b { background: transparent; color: var(--text2); font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.8rem 2rem; border: 1px solid var(--border2); cursor: pointer; transition: all 0.2s; }
+.btn-b:hover { border-color: var(--amber); color: var(--amber); }
+.scroll-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 0.4rem; animation: fadeUp 1s 0.6s ease both; }
+.scroll-hint span { font-family: var(--mono); font-size: 0.58rem; color: var(--text3); letter-spacing: 0.2em; }
+.scroll-bar { width: 1px; height: 55px; background: linear-gradient(to bottom, var(--amber), transparent); animation: drop 2s ease infinite; }
+@keyframes drop { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform:scaleY(1);transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+/* SIMULATOR */
+#simulator { position: relative; z-index: 1; padding: 6rem 2rem; max-width: 1200px; margin: 0 auto; }
+.slabel { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); margin-bottom: 0.6rem; }
+.stitle { font-family: var(--display); font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; }
+.ssub { color: var(--text2); font-size: 0.95rem; line-height: 1.7; margin-top: 0.6rem; }
+.sim-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: 1.5rem; margin-top: 2.5rem; align-items: start; }
+.sim-form { background: var(--panel); border: 1px solid var(--border); padding: 1.75rem; }
+.fdivider { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); letter-spacing: 0.15em; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin: 1.25rem 0; }
+.fg { margin-bottom: 1.25rem; }
+.flabel { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 0.67rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text2); margin-bottom: 0.45rem; }
+.fval { color: var(--amber); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+input[type=range] { width: 100%; -webkit-appearance: none; height: 3px; border-radius: 0; background: var(--border2); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; background: var(--amber); cursor: pointer; clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%); }
+select { width: 100%; padding: 0.5rem 0.7rem; background: var(--bg3); border: 1px solid var(--border2); color: var(--text); font-family: var(--mono); font-size: 0.72rem; cursor: pointer; outline: none; }
+select:focus { border-color: var(--amber); }
+.pred-btn { width: 100%; padding: 0.9rem; background: var(--amber); color: #000; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.2s; margin-top: 0.5rem; }
+.pred-btn:hover { background: var(--amber2); }
+.pred-btn.loading { opacity: 0.65; cursor: not-allowed; }
+
+/* RESULT */
+.result-panel { background: var(--panel); border: 1px solid var(--border); min-height: 420px; display: flex; flex-direction: column; }
+.rp-head { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.rp-head-label { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); }
+.rp-status { font-family: var(--mono); font-size: 0.62rem; color: var(--green); }
+.rp-body { padding: 1.75rem; flex: 1; }
+.idle-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 3rem; }
+.idle-icon { font-size: 3rem; opacity: 0.25; margin-bottom: 1rem; }
+.idle-text { font-family: var(--mono); font-size: 0.67rem; color: var(--text3); letter-spacing: 0.08em; line-height: 1.8; }
+.risk-result { display: none; }
+.risk-result.active { display: block; animation: fadeIn 0.35s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.tier-block { text-align: center; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid; }
+.tier-emoji { font-size: 2.2rem; margin-bottom: 0.4rem; }
+.tier-lbl { font-family: var(--display); font-size: 2.2rem; font-weight: 800; }
+.tier-desc { font-size: 0.83rem; color: var(--text2); margin-top: 0.6rem; line-height: 1.5; }
+.prob-row { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.55rem; }
+.prob-lbl { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; width: 68px; flex-shrink: 0; }
+.prob-track { flex: 1; height: 5px; background: var(--border); }
+.prob-fill { height: 100%; transition: width 0.7s cubic-bezier(.25,.46,.45,.94); }
+.prob-pct { font-family: var(--mono); font-size: 0.68rem; width: 36px; text-align: right; color: var(--text2); }
+.factors-hd { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin: 1.25rem 0 0.7rem; border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+.f-row { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.45rem; }
+.f-name { font-size: 0.78rem; color: var(--text2); flex: 1; }
+.f-track { width: 90px; height: 3px; background: var(--border); }
+.f-fill { height: 100%; background: var(--amber); }
+.f-pct { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); width: 28px; text-align: right; }
+
+/* HOW IT WORKS */
+#how-it-works { position: relative; z-index: 1; padding: 6rem 2rem; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.how-inner { max-width: 1100px; margin: 0 auto; }
+.how-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; margin-top: 2.5rem; border: 1px solid var(--border); }
+.how-card { padding: 2rem 1.5rem; border-right: 1px solid var(--border); transition: background 0.2s; }
+.how-card:last-child { border-right: none; }
+.how-card:hover { background: rgba(245,158,11,0.04); }
+.how-num { font-family: var(--mono); font-size: 0.62rem; color: var(--amber); letter-spacing: 0.15em; margin-bottom: 0.9rem; }
+.how-icon { font-size: 1.6rem; margin-bottom: 0.9rem; }
+.how-title { font-family: var(--display); font-size: 0.98rem; font-weight: 700; margin-bottom: 0.6rem; }
+.how-desc { font-size: 0.83rem; color: var(--text2); line-height: 1.65; }
+
+/* FEATURES */
+#features { position: relative; z-index: 1; padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+.feat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 2.5rem; }
+.feat-card { background: var(--bg); padding: 1.75rem; transition: background 0.2s; }
+.feat-card:hover { background: var(--panel); }
+.feat-icon { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.feat-title { font-family: var(--display); font-size: 0.95rem; font-weight: 700; margin-bottom: 0.45rem; }
+.feat-desc { font-size: 0.83rem; color: var(--text2); line-height: 1.6; }
+.feat-tag { display: inline-block; margin-top: 0.65rem; font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--amber); border: 1px solid rgba(245,158,11,0.3); padding: 2px 6px; }
+
+/* MODEL INFO */
+#model { position: relative; z-index: 1; padding: 6rem 2rem; background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.model-inner { max-width: 1100px; margin: 0 auto; }
+.model-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2.5rem; margin-top: 2.5rem; align-items: start; }
+.mstat-list { display: flex; flex-direction: column; gap: 1px; }
+.mstat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.1rem; background: var(--panel); border-left: 3px solid transparent; transition: border-color 0.2s; }
+.mstat-row:hover { border-left-color: var(--amber); }
+.mstat-key { font-family: var(--mono); font-size: 0.68rem; color: var(--text2); }
+.mstat-val { font-family: var(--mono); font-size: 0.82rem; color: var(--amber); font-weight: 700; }
+.imp-title { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 0.9rem; }
+.imp-row { margin-bottom: 0.7rem; }
+.imp-hd { display: flex; justify-content: space-between; margin-bottom: 0.22rem; }
+.imp-name { font-size: 0.8rem; color: var(--text); }
+.imp-val { font-family: var(--mono); font-size: 0.72rem; color: var(--amber); }
+.imp-bg { height: 4px; background: var(--border); }
+.imp-fill { height: 100%; background: linear-gradient(to right, var(--blue), var(--amber)); transition: width 0.9s ease; }
+
+/* RISK TIERS */
+#risk-tiers { position: relative; z-index: 1; padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; border-top: 1px solid var(--border); }
+.tiers-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-top: 2.5rem; }
+.tier-card { padding: 1.75rem 1.25rem; border: 1px solid; transition: transform 0.2s; }
+.tier-card:hover { transform: translateY(-4px); }
+.tc-emoji { font-size: 1.8rem; margin-bottom: 0.7rem; }
+.tc-label { font-family: var(--display); font-size: 1.2rem; font-weight: 800; margin-bottom: 0.6rem; }
+.tc-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.6; }
+.tc-pct { font-family: var(--mono); font-size: 0.65rem; color: var(--text3); margin-top: 0.9rem; padding-top: 0.7rem; border-top: 1px solid rgba(255,255,255,0.06); }
+
+/* FOOTER */
+footer { position: relative; z-index: 1; padding: 2.5rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.footer-brand { font-family: var(--display); font-size: 1.15rem; font-weight: 800; }
+.footer-brand span { color: var(--amber); }
+.footer-copy { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); letter-spacing: 0.07em; }
+.footer-links { display: flex; gap: 1.5rem; }
+.footer-links a { font-family: var(--mono); font-size: 0.62rem; color: var(--text3); text-decoration: none; letter-spacing: 0.07em; }
+.footer-links a:hover { color: var(--amber); }
+
+@media(max-width:768px){
+  .sim-layout,.model-layout{grid-template-columns:1fr}
+  .how-grid,.tiers-grid{grid-template-columns:1fr 1fr}
+  .feat-grid{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+  .nav-links{display:none}
+}
+@media(max-width:480px){
+  .how-grid,.feat-grid,.tiers-grid{grid-template-columns:1fr}
+  .hero-stats{gap:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand"><div class="nav-dot"></div>CRASH<span style="color:var(--amber)">RISK</span></div>
+  <div class="nav-links">
+    <a href="#simulator">Simulator</a>
+    <a href="#how-it-works">Pipeline</a>
+    <a href="#model">Model</a>
+    <a href="#risk-tiers">Risk Tiers</a>
+  </div>
+  <div class="nav-badge">LIVE MODEL</div>
+</nav>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item">MODEL ACCURACY<span class="tv">{{ model_accuracy }}%</span></span>
+    <span class="ticker-item">ALGORITHM<span class="tv">GRADIENT BOOSTING</span></span>
+    <span class="ticker-item">TRAINING SAMPLES<span class="tv">10,000</span></span>
+    <span class="ticker-item">FEATURES<span class="tv">11</span></span>
+    <span class="ticker-item">RISK TIERS<span class="tv">4</span></span>
+    <span class="ticker-item">DATA SOURCES<span class="tv">ASN · NTSB · BAAA</span></span>
+    <span class="ticker-item">STATUS<span class="tg">OPERATIONAL</span></span>
+    <span class="ticker-item">MODEL ACCURACY<span class="tv">{{ model_accuracy }}%</span></span>
+    <span class="ticker-item">ALGORITHM<span class="tv">GRADIENT BOOSTING</span></span>
+    <span class="ticker-item">TRAINING SAMPLES<span class="tv">10,000</span></span>
+    <span class="ticker-item">FEATURES<span class="tv">11</span></span>
+    <span class="ticker-item">RISK TIERS<span class="tv">4</span></span>
+    <span class="ticker-item">DATA SOURCES<span class="tv">ASN · NTSB · BAAA</span></span>
+    <span class="ticker-item">STATUS<span class="tg">OPERATIONAL</span></span>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-eyebrow">// Deep Learning · Aviation Safety Intelligence</div>
+  <h1>Crash<span>Risk</span></h1>
+  <p class="hero-sub">
+    Predict flight risk before takeoff. Our trained ML model classifies every scenario into
+    actionable tiers — <em>Low, Moderate, High,</em> and <em>Critical</em> —
+    so airlines, regulators, and crews can act before incidents occur.
+  </p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="val">{{ model_accuracy }}%</div><div class="lbl">Model Accuracy</div></div>
+    <div class="hstat"><div class="val">10K</div><div class="lbl">Training Samples</div></div>
+    <div class="hstat"><div class="val">11</div><div class="lbl">Risk Features</div></div>
+    <div class="hstat"><div class="val">4</div><div class="lbl">Risk Tiers</div></div>
+  </div>
+  <div class="hero-btns">
+    <button class="btn-a" onclick="document.getElementById('simulator').scrollIntoView({behavior:'smooth'})">Try the Simulator ↓</button>
+    <button class="btn-b" onclick="document.getElementById('model').scrollIntoView({behavior:'smooth'})">View Model Info</button>
+  </div>
+  <div class="scroll-hint"><span>SCROLL</span><div class="scroll-bar"></div></div>
+</section>
+
+<!-- SIMULATOR -->
+<section id="simulator">
+  <div style="max-width:1200px;margin:0 auto;padding:6rem 2rem">
+    <div class="slabel">// 01 · Risk Simulator</div>
+    <h2 class="stitle">Configure a flight scenario,<br>get an instant risk prediction.</h2>
+    <p class="ssub">Adjust parameters across aircraft, crew, weather, and operational domains. The model evaluates all 11 features simultaneously.</p>
+
+    <div class="sim-layout">
+      <div class="sim-form">
+        <div class="fdivider">✈ Aircraft &amp; Maintenance</div>
+        <div class="fg">
+          <div class="flabel">Aircraft Age (years) <span class="fval" id="dv-aircraft_age">12 yrs</span></div>
+          <input type="range" id="aircraft_age" min="0" max="45" value="12" step="1" oninput="uv('aircraft_age',this.value,' yrs')">
+        </div>
+        <div class="fg">
+          <div class="flabel">Days Since Last Maintenance <span class="fval" id="dv-maintenance_days">45 days</span></div>
+          <input type="range" id="maintenance_days" min="0" max="365" value="45" step="1" oninput="uv('maintenance_days',this.value,' days')">
+        </div>
+
+        <div class="fdivider">👨‍✈️ Crew</div>
+        <div class="form-row">
+          <div class="fg">
+            <div class="flabel">Pilot Flight Hours <span class="fval" id="dv-pilot_hours">3,500 hrs</span></div>
+            <input type="range" id="pilot_hours" min="200" max="25000" value="3500" step="100" oninput="uv('pilot_hours',parseFloat(this.value).toLocaleString(),' hrs')">
+          </div>
+          <div class="fg">
+            <div class="flabel">Days Since Last Flight <span class="fval" id="dv-pilot_recency">10 days</span></div>
+            <input type="range" id="pilot_recency" min="0" max="120" value="10" step="1" oninput="uv('pilot_recency',this.value,' days')">
+          </div>
+        </div>
+
+        <div class="fdivider">🌩 Weather &amp; Environment</div>
+        <div class="form-row">
+          <div class="fg">
+            <div class="flabel">Weather Severity (0–10) <span class="fval" id="dv-weather_severity">2.0</span></div>
+            <input type="range" id="weather_severity" min="0" max="10" value="2" step="0.1" oninput="uv('weather_severity',parseFloat(this.value).toFixed(1),'')">
+          </div>
+          <div class="fg">
+            <div class="flabel">Visibility (miles) <span class="fval" id="dv-visibility">10.0 mi</span></div>
+            <input type="range" id="visibility" min="0.1" max="15" value="10" step="0.1" oninput="uv('visibility',parseFloat(this.value).toFixed(1),' mi')">
+          </div>
+        </div>
+        <div class="fg">
+          <div class="flabel">Turbulence (0–10) <span class="fval" id="dv-turbulence">1.0</span></div>
+          <input type="range" id="turbulence" min="0" max="10" value="1" step="0.1" oninput="uv('turbulence',parseFloat(this.value).toFixed(1),'')">
+        </div>
+
+        <div class="fdivider">🛫 Operational</div>
+        <div class="form-row">
+          <div class="fg">
+            <div class="flabel">Airport Complexity (0–10) <span class="fval" id="dv-airport_complexity">5.0</span></div>
+            <input type="range" id="airport_complexity" min="0" max="10" value="5" step="0.1" oninput="uv('airport_complexity',parseFloat(this.value).toFixed(1),'')">
+          </div>
+          <div class="fg">
+            <div class="flabel" style="margin-bottom:0.4rem">Flight Time</div>
+            <select id="time_risk" onchange="autoP()">
+              <option value="0.2">Daytime (06:00–22:00)</option>
+              <option value="0.4">Early Morning (06:00–09:00)</option>
+              <option value="1.0">Night (22:00–06:00)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="fg">
+            <div class="flabel" style="margin-bottom:0.4rem">Season</div>
+            <select id="season_risk" onchange="autoP()">
+              <option value="0.3">Spring</option>
+              <option value="0.6">Summer</option>
+              <option value="0.3">Autumn</option>
+              <option value="1.0">Winter</option>
+            </select>
+          </div>
+          <div class="fg">
+            <div class="flabel" style="margin-bottom:0.4rem">Cargo Type</div>
+            <select id="cargo_type" onchange="autoP()">
+              <option value="0">Passenger</option>
+              <option value="1">Cargo</option>
+              <option value="2">Mixed</option>
+            </select>
+          </div>
+        </div>
+        <button class="pred-btn" id="pred-btn" onclick="predict()">⚡ ANALYZE RISK</button>
+      </div>
+
+      <div class="result-panel">
+        <div class="rp-head">
+          <span class="rp-head-label">// Risk Assessment Output</span>
+          <span class="rp-status" id="rp-status">AWAITING INPUT</span>
+        </div>
+        <div class="rp-body">
+          <div class="idle-state" id="idle">
+            <div class="idle-icon">✈</div>
+            <div class="idle-text">Configure scenario parameters<br>and click Analyze Risk</div>
+          </div>
+          <div class="risk-result" id="risk-result">
+            <div class="tier-block" id="tier-block">
+              <div class="tier-emoji" id="t-emoji"></div>
+              <div class="tier-lbl" id="t-lbl"></div>
+              <div class="tier-desc" id="t-desc"></div>
+            </div>
+            <div id="prob-bars">
+              <div class="prob-row"><span class="prob-lbl" style="color:#22c55e">Low</span><div class="prob-track"><div class="prob-fill" id="pb-low" style="width:0%;background:#22c55e"></div></div><span class="prob-pct" id="pp-low">—</span></div>
+              <div class="prob-row"><span class="prob-lbl" style="color:#f59e0b">Moderate</span><div class="prob-track"><div class="prob-fill" id="pb-mod" style="width:0%;background:#f59e0b"></div></div><span class="prob-pct" id="pp-mod">—</span></div>
+              <div class="prob-row"><span class="prob-lbl" style="color:#f97316">High</span><div class="prob-track"><div class="prob-fill" id="pb-high" style="width:0%;background:#f97316"></div></div><span class="prob-pct" id="pp-high">—</span></div>
+              <div class="prob-row"><span class="prob-lbl" style="color:#ef4444">Critical</span><div class="prob-track"><div class="prob-fill" id="pb-crit" style="width:0%;background:#ef4444"></div></div><span class="prob-pct" id="pp-crit">—</span></div>
+            </div>
+            <div class="factors-hd">// Top Contributing Risk Factors</div>
+            <div id="factors-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="how-inner">
+    <div class="slabel">// 02 · Pipeline</div>
+    <h2 class="stitle">From raw data to<br>actionable risk intelligence.</h2>
+    <div class="how-grid">
+      <div class="how-card"><div class="how-num">01</div><div class="how-icon">📥</div><div class="how-title">Data Ingestion</div><div class="how-desc">Incident records from ASN, NTSB, and BAAA merge with real-time environmental feeds and operational metadata across three data domains.</div></div>
+      <div class="how-card"><div class="how-num">02</div><div class="how-icon">⚙️</div><div class="how-title">Feature Engineering</div><div class="how-desc">11 cross-domain features computed including interaction terms — aging aircraft × bad weather, inexperienced crew × night flight conditions.</div></div>
+      <div class="how-card"><div class="how-num">03</div><div class="how-icon">🤖</div><div class="how-title">Model Inference</div><div class="how-desc">Gradient Boosting Classifier (300 trees, depth-5) classifies the scenario. Confidence probabilities returned for all 4 risk tiers simultaneously.</div></div>
+      <div class="how-card"><div class="how-num">04</div><div class="how-icon">📊</div><div class="how-title">Explainability</div><div class="how-desc">Feature contribution scores surface the exact factors driving each prediction. Operators see what to address — no black box, full transparency.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="slabel">// 03 · Key Risk Features</div>
+  <h2 class="stitle">Eleven factors. One verdict.</h2>
+  <div class="feat-grid">
+    <div class="feat-card"><div class="feat-icon">✈️</div><div class="feat-title">Aircraft Age</div><div class="feat-desc">Older airframes accumulate mechanical fatigue. Combined with deferred maintenance, age is a critical compounding multiplier.</div><div class="feat-tag">Base Weight: 14%</div></div>
+    <div class="feat-card"><div class="feat-icon">🔧</div><div class="feat-title">Maintenance Recency</div><div class="feat-desc">Days since the last maintenance check. The top single predictor — outstanding airworthiness directives heavily elevate risk scores.</div><div class="feat-tag">Base Weight: 16%</div></div>
+    <div class="feat-card"><div class="feat-icon">👨‍✈️</div><div class="feat-title">Pilot Experience</div><div class="feat-desc">Total flight hours weighted against route and aircraft complexity. Logarithmic scaling reflects the diminishing marginal return of experience.</div><div class="feat-tag">Base Weight: 18%</div></div>
+    <div class="feat-card"><div class="feat-icon">📅</div><div class="feat-title">Pilot Recency</div><div class="feat-desc">Days since the pilot's last flight. Currency of type-specific flight is a stronger predictor than total logged hours alone.</div><div class="feat-tag">Base Weight: 10%</div></div>
+    <div class="feat-card"><div class="feat-icon">🌩️</div><div class="feat-title">Weather Severity</div><div class="feat-desc">Composite IMC score from precipitation, crosswinds, and ceiling conditions. A peak-risk trigger when crossing critical thresholds.</div><div class="feat-tag">Base Weight: 15%</div></div>
+    <div class="feat-card"><div class="feat-icon">👁️</div><div class="feat-title">Visibility</div><div class="feat-desc">Statute miles of reported visibility. Below 3 miles, approach and landing incident rates climb exponentially in the training data.</div><div class="feat-tag">Base Weight: 8%</div></div>
+    <div class="feat-card"><div class="feat-icon">💨</div><div class="feat-title">Turbulence</div><div class="feat-desc">Forecast turbulence severity. A significant factor in structural stress events, crew incapacitation, and loss-of-control incidents.</div><div class="feat-tag">Base Weight: 8%</div></div>
+    <div class="feat-card"><div class="feat-icon">🛫</div><div class="feat-title">Airport Complexity</div><div class="feat-desc">Composite index: runway configuration, traffic density, ILS category, terrain proximity, and approach complexity at the destination.</div><div class="feat-tag">Base Weight: 6%</div></div>
+    <div class="feat-card"><div class="feat-icon">🌙</div><div class="feat-title">Time + Season</div><div class="feat-desc">Night operations and winter seasons carry validated historical risk multipliers across 30+ years of global incident data.</div><div class="feat-tag">Base Weight: 5%</div></div>
+  </div>
+</section>
+
+<!-- MODEL INFO -->
+<section id="model">
+  <div class="model-inner">
+    <div class="slabel">// 04 · Model Details</div>
+    <h2 class="stitle">{{ model_accuracy }}% accuracy. Trained on 10,000 scenarios.</h2>
+    <div class="model-layout">
+      <div class="mstat-list">
+        <div class="mstat-row"><span class="mstat-key">Algorithm</span><span class="mstat-val">Gradient Boosting</span></div>
+        <div class="mstat-row"><span class="mstat-key">Estimators</span><span class="mstat-val">300 Trees</span></div>
+        <div class="mstat-row"><span class="mstat-key">Max Tree Depth</span><span class="mstat-val">5</span></div>
+        <div class="mstat-row"><span class="mstat-key">Learning Rate</span><span class="mstat-val">0.08</span></div>
+        <div class="mstat-row"><span class="mstat-key">Subsample Rate</span><span class="mstat-val">85%</span></div>
+        <div class="mstat-row"><span class="mstat-key">Train / Test Split</span><span class="mstat-val">80% / 20%</span></div>
+        <div class="mstat-row"><span class="mstat-key">Training Samples</span><span class="mstat-val">10,000</span></div>
+        <div class="mstat-row"><span class="mstat-key">Test Accuracy</span><span class="mstat-val">{{ model_accuracy }}%</span></div>
+        <div class="mstat-row"><span class="mstat-key">Output Classes</span><span class="mstat-val">4 Risk Tiers</span></div>
+        <div class="mstat-row"><span class="mstat-key">Explainability</span><span class="mstat-val">Feature Contributions</span></div>
+      </div>
+      <div>
+        <div class="imp-title">// Feature Importances (Learned by Model)</div>
+        <div id="imp-bars"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RISK TIERS -->
+<section id="risk-tiers">
+  <div style="max-width:1100px;margin:0 auto;padding:6rem 2rem">
+    <div class="slabel">// 05 · Classification System</div>
+    <h2 class="stitle">Four tiers. Clear action protocols.</h2>
+    <div class="tiers-grid">
+      <div class="tier-card" style="color:#22c55e;border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.04)">
+        <div class="tc-emoji">✅</div><div class="tc-label">LOW</div>
+        <div class="tc-desc">Flight conditions within normal safety parameters. Standard pre-flight protocols apply. No additional review required.</div>
+        <div class="tc-pct">~37% of scenarios</div>
+      </div>
+      <div class="tier-card" style="color:#f59e0b;border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04)">
+        <div class="tc-emoji">⚠️</div><div class="tc-label">MODERATE</div>
+        <div class="tc-desc">Elevated risk factors detected. Enhanced crew briefing, additional monitoring, and operational contingencies recommended.</div>
+        <div class="tc-pct">~51% of scenarios</div>
+      </div>
+      <div class="tier-card" style="color:#f97316;border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.04)">
+        <div class="tc-emoji">🔴</div><div class="tc-label">HIGH</div>
+        <div class="tc-desc">Multiple risk factors converging. Operational review required. Consider delay, alternate routing, or crew augmentation.</div>
+        <div class="tc-pct">~9% of scenarios</div>
+      </div>
+      <div class="tier-card" style="color:#ef4444;border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)">
+        <div class="tc-emoji">🚨</div><div class="tc-label">CRITICAL</div>
+        <div class="tc-desc">Critical risk level. Immediate safety review by senior operations required before any flight operations proceed.</div>
+        <div class="tc-pct">~3% of scenarios</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">CRASH<span>RISK</span></div>
+  <div class="footer-copy">© 2025 CrashRisk · Predictive Aviation Safety Intelligence · Flask + Gradient Boosting</div>
+  <div class="footer-links">
+    <a href="#simulator">Simulator</a>
+    <a href="#model">Model</a>
+    <a href="/api/model-info" target="_blank">API →</a>
+  </div>
+</footer>
+
+<script>
+// Feature importances injected from Flask
+const importances = {{ feature_importances | safe }};
+
+// Render importance bars
+(function(){
+  const c = document.getElementById('imp-bars');
+  const sorted = Object.entries(importances).sort((a,b)=>b[1]-a[1]);
+  const mx = sorted[0][1];
+  sorted.forEach(([k,v])=>{
+    const pct = (v*100).toFixed(1);
+    const w = (v/mx*100).toFixed(1);
+    const label = k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    c.innerHTML += `<div class="imp-row">
+      <div class="imp-hd"><span class="imp-name">${label}</span><span class="imp-val">${pct}%</span></div>
+      <div class="imp-bg"><div class="imp-fill" style="width:${w}%"></div></div>
+    </div>`;
+  });
+})();
+
+// Slider display update
+function uv(id, val, sfx) {
+  const el = document.getElementById('dv-'+id);
+  if(el) el.textContent = val + sfx;
+  autoP();
+}
+
+// Debounced auto-predict
+let dt;
+function autoP(){ clearTimeout(dt); dt = setTimeout(predict, 450); }
+
+// Prediction
+async function predict(){
+  const btn = document.getElementById('pred-btn');
+  btn.classList.add('loading');
+  btn.textContent = '⏳ ANALYZING...';
+
+  const body = {
+    aircraft_age:       +document.getElementById('aircraft_age').value,
+    maintenance_days:   +document.getElementById('maintenance_days').value,
+    pilot_hours:        +document.getElementById('pilot_hours').value,
+    pilot_recency:      +document.getElementById('pilot_recency').value,
+    weather_severity:   +document.getElementById('weather_severity').value,
+    visibility:         +document.getElementById('visibility').value,
+    turbulence:         +document.getElementById('turbulence').value,
+    airport_complexity: +document.getElementById('airport_complexity').value,
+    time_risk:          +document.getElementById('time_risk').value,
+    season_risk:        +document.getElementById('season_risk').value,
+    cargo_type:         +document.getElementById('cargo_type').value,
+  };
+
+  try {
+    const r = await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if(d.error) throw new Error(d.error);
+    renderResult(d);
+  } catch(e){ console.error(e); }
+  finally {
+    btn.classList.remove('loading');
+    btn.textContent = '⚡ ANALYZE RISK';
+  }
+}
+
+function renderResult(d){
+  const {tier_info, probabilities, top_factors} = d;
+  document.getElementById('idle').style.display = 'none';
+  const rr = document.getElementById('risk-result');
+  rr.classList.add('active');
+  document.getElementById('rp-status').textContent = 'PREDICTION READY';
+
+  const tb = document.getElementById('tier-block');
+  tb.style.borderColor = tier_info.color;
+  tb.style.background = tier_info.bg + '44';
+  document.getElementById('t-emoji').textContent = tier_info.emoji;
+  const lbl = document.getElementById('t-lbl');
+  lbl.textContent = tier_info.label;
+  lbl.style.color = tier_info.color;
+  document.getElementById('t-desc').textContent = tier_info.desc;
+
+  const bars = [
+    {id:'low',key:'Low',c:'#22c55e'},{id:'mod',key:'Moderate',c:'#f59e0b'},
+    {id:'high',key:'High',c:'#f97316'},{id:'crit',key:'Critical',c:'#ef4444'}
+  ];
+  bars.forEach(b=>{
+    const p = probabilities[b.key];
+    document.getElementById('pb-'+b.id).style.width = p+'%';
+    document.getElementById('pp-'+b.id).textContent = p+'%';
+  });
+
+  const fl = document.getElementById('factors-list');
+  fl.innerHTML = '';
+  const mx = top_factors[0]?.score || 1;
+  top_factors.forEach(f=>{
+    const w = Math.min(f.score/mx*100,100).toFixed(0);
+    fl.innerHTML += `<div class="f-row">
+      <span class="f-name">${f.name}</span>
+      <div class="f-track"><div class="f-fill" style="width:${w}%"></div></div>
+      <span class="f-pct">${f.score}%</span>
+    </div>`;
+  });
+}
+</script>
+</body>
+</html>
